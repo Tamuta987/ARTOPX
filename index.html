@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TIR Correction V2</title>
+<style>
+:root{--bg:#0b1020;--card:#121933;--card2:#1a2347;--text:#eef2ff;--muted:#aab4d6;--accent:#5ea1ff;--ok:#7ef0c8;--warn:#ffd36c;--danger:#ff8f8f;--border:rgba(255,255,255,.09);--shadow:0 10px 28px rgba(0,0,0,.28)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(180deg,#0a0f1d,#0d1430 45%,#0a0f1d);color:var(--text)}
+.wrap{max-width:820px;margin:0 auto;padding:16px 14px 34px}h1{margin:0 0 4px;font-size:28px}.sub{color:var(--muted);font-size:14px;margin-bottom:12px;line-height:1.35}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.title{font-weight:900;font-size:17px;margin-bottom:10px}.grid{display:grid;gap:10px}.cols-2{grid-template-columns:repeat(2,1fr)}.cols-3{grid-template-columns:repeat(3,1fr)}@media(max-width:700px){.cols-2,.cols-3{grid-template-columns:1fr}}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input{width:100%;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--text);padding:12px 13px;font-size:16px;outline:none}input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(94,161,255,.18)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:14px;padding:13px 15px;font-weight:900;font-size:15px;color:white;background:linear-gradient(180deg,var(--accent),#427dff);box-shadow:var(--shadow);cursor:pointer}button.secondary{background:rgba(255,255,255,.08);border:1px solid var(--border);color:var(--text)}button.ok{background:linear-gradient(180deg,var(--ok),#1fc7a1);color:#05251c}button.warn{background:linear-gradient(180deg,var(--warn),#ffb11f);color:#291900}button.danger{background:linear-gradient(180deg,var(--danger),#e64747)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;position:sticky;top:0;background:rgba(10,15,29,.92);backdrop-filter:blur(10px);padding:8px 0;z-index:10}.tab{background:rgba(255,255,255,.08);border:1px solid var(--border)}.tab.active{background:linear-gradient(180deg,var(--accent),#427dff)}
+.panel{display:none}.panel.active{display:block}.state{position:sticky;top:64px;z-index:7;background:rgba(11,16,32,.9);backdrop-filter:blur(10px)}
+.results{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}@media(max-width:700px){.results{grid-template-columns:1fr}}.result{background:rgba(255,255,255,.055);border:1px solid var(--border);border-radius:14px;padding:12px}.k{color:var(--muted);font-size:12px;margin-bottom:4px}.v{font-size:24px;font-weight:900;word-break:break-word}.bigcmd{font-size:28px}.err{color:var(--danger);white-space:pre-wrap;margin-top:10px}.note{color:var(--muted);font-size:13px;line-height:1.35;margin-top:8px}.badge{display:inline-block;padding:6px 10px;border:1px solid var(--border);background:rgba(255,255,255,.06);border-radius:999px;color:var(--muted);font-size:12px}.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>TIR Correction V2</h1>
+<div class="sub">Version GitHub/iPhone du programme TI : position sauvegardée, objectif sauvegardé, rayonnement objectif, correction avec point moyen, cycle tir. X / Y / Z toujours affichés et sauvegardés sans décimales.</div>
+
+<div class="card state">
+  <div class="title">État courant</div>
+  <div class="results">
+    <div class="result"><div class="k">Position</div><div class="v" id="statePos">NON DÉFINIE</div></div>
+    <div class="result"><div class="k">Objectif</div><div class="v" id="stateObj">NON DÉFINI</div></div>
+  </div>
+  <div class="row">
+    <button class="secondary" id="loadSaved">Recharger sauvegarde</button>
+    <button class="danger" id="clearAll">Effacer sauvegarde</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="pos">Position / Objectif</button>
+  <button class="tab" data-tab="tir">Tir</button>
+  <button class="tab" data-tab="cycle">Cycle</button>
+</div>
+
+<section class="panel active" id="panel-pos">
+  <div class="card">
+    <div class="title">Position</div>
+    <div class="grid cols-3">
+      <div><label>X POSI</label><input id="posX" type="number" inputmode="numeric" step="1"></div>
+      <div><label>Y POSI</label><input id="posY" type="number" inputmode="numeric" step="1"></div>
+      <div><label>Z POSI</label><input id="posZ" type="number" inputmode="numeric" step="1" value="0"></div>
+    </div>
+    <div class="row">
+      <button class="ok" id="savePos">Sauver position</button>
+      <button class="secondary" id="clearPos">Effacer position</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Objectif manuel</div>
+    <div class="grid cols-3">
+      <div><label>X OBJ</label><input id="objX" type="number" inputmode="numeric" step="1"></div>
+      <div><label>Y OBJ</label><input id="objY" type="number" inputmode="numeric" step="1"></div>
+      <div><label>Z OBJ</label><input id="objZ" type="number" inputmode="numeric" step="1" value="0"></div>
+    </div>
+    <div class="row">
+      <button class="ok" id="saveObj">Sauver objectif</button>
+      <button class="secondary" id="clearObj">Effacer objectif</button>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="panel-tir">
+  <div class="card">
+    <div class="title">Rayonnement objectif</div>
+    <div class="grid cols-3">
+      <div><label>GIS</label><input id="rayG" type="number" inputmode="decimal"></div>
+      <div><label>DH</label><input id="rayD" type="number" inputmode="decimal"></div>
+      <div><label>SITE</label><input id="rayS" type="number" inputmode="decimal" value="0"></div>
+    </div>
+    <div class="row">
+      <button id="calcObj">Calculer objectif</button>
+      <button class="secondary" id="clearRay">Effacer</button>
+    </div>
+    <div id="objErr" class="err"></div>
+    <div class="results" id="objRes" style="display:none">
+      <div class="result"><div class="k">X OBJ</div><div class="v" id="rObjX"></div></div>
+      <div class="result"><div class="k">Y OBJ</div><div class="v" id="rObjY"></div></div>
+      <div class="result"><div class="k">Z OBJ</div><div class="v" id="rObjZ"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Correction de tir</div>
+    <div class="note">Entrer le point moyen observé depuis la position. Le calcul compare le point moyen à l’objectif sauvegardé.</div>
+    <div class="grid cols-3">
+      <div><label>GIS point moyen</label><input id="pmG" type="number" inputmode="decimal"></div>
+      <div><label>DH point moyen</label><input id="pmD" type="number" inputmode="decimal"></div>
+      <div><label>SITE point moyen</label><input id="pmS" type="number" inputmode="decimal" value="0"></div>
+    </div>
+    <div class="row">
+      <button id="calcCorr">Calculer correction</button>
+      <button class="secondary" id="clearPm">Effacer</button>
+    </div>
+    <div id="corrErr" class="err"></div>
+    <div class="results" id="corrRes" style="display:none">
+      <div class="result"><div class="k">Direction</div><div class="v bigcmd" id="rDir"></div></div>
+      <div class="result"><div class="k">Portée</div><div class="v bigcmd" id="rPort"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="panel-cycle">
+  <div class="card">
+    <div class="title">Cycle tir</div>
+    <div class="note">Flux terrain : garder/changer position, créer un objectif par rayonnement direct, puis calculer la correction sur point moyen.</div>
+    <div class="row">
+      <button class="warn" id="startCycle">Démarrer cycle</button>
+      <button class="secondary" id="nextCycleObj">Étape 1 : objectif</button>
+      <button class="secondary" id="nextCycleCorr">Étape 2 : correction</button>
+    </div>
+    <div class="note">
+      Pour iPhone, les étapes sont séparées au lieu de popups bloquantes en boucle.
+      Utilise l’onglet Tir pour saisir les valeurs, puis les boutons du cycle pour enchaîner.
+    </div>
+    <div id="cycleMsg" class="err"></div>
+  </div>
+
+  <div class="card">
+    <div class="title">Règles prises en compte</div>
+    <span class="badge">5 digits X/Y</span>
+    <span class="badge">Bord auto 100000</span>
+    <span class="badge">Site négatif autorisé</span>
+    <span class="badge">Sauvegarde locale</span>
+    <span class="badge">POINT MOYEN</span>
+    <span class="badge">PLUS A DROITE / GAUCHE</span>
+    <span class="badge">PLUS PRES / LOIN</span>
+    <span class="badge">X/Y/Z sans décimales</span>
+  </div>
+</section>
+
+<div class="footer">Gisements/sites en 6400 millièmes. Correction direction : écart millièmes × distance × π / 3200.</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id)
+const M=100000,H=50000,LS_POS='tir_posi_web',LS_OBJ='tir_obj_web'
+let pos=null,obj=null
+
+function fmt5(v){let n=((Math.round(v)%M)+M)%M;return String(n).padStart(5,'0')}
+function val(id){const v=parseFloat($(id).value);return Number.isFinite(v)?v:null}
+function setVal(id,v){$(id).value=v??''}
+function need(v,name){if(v===null)throw new Error('Entre '+name+'.');return v}
+function wrap(v){return ((v%M)+M)%M}
+function ld(ref,target){let d=target-ref;if(d>H)d-=M;else if(d<-H)d+=M;return d}
+function save(name,o){localStorage.setItem(name,JSON.stringify(o))}
+function load(name){try{return JSON.parse(localStorage.getItem(name))}catch(e){return null}}
+
+function refresh(){
+  $('statePos').textContent=pos?`${fmt5(pos.x)} ${fmt5(pos.y)} ${Math.round(pos.z)}`:'NON DÉFINIE'
+  $('stateObj').textContent=obj?`${fmt5(obj.x)} ${fmt5(obj.y)} ${Math.round(obj.z)}`:'NON DÉFINI'
+}
+
+function savePosFromFields(){
+  const x=Math.round(need(val('posX'),'X POSI'))
+  const y=Math.round(need(val('posY'),'Y POSI'))
+  const z=Math.round(need(val('posZ'),'Z POSI'))
+  pos={x,y,z}
+  save(LS_POS,pos)
+  setVal('posX',x);setVal('posY',y);setVal('posZ',z)
+  refresh()
+}
+
+function saveObjFromFields(){
+  const x=Math.round(need(val('objX'),'X OBJ'))
+  const y=Math.round(need(val('objY'),'Y OBJ'))
+  const z=Math.round(need(val('objZ'),'Z OBJ'))
+  obj={x,y,z}
+  save(LS_OBJ,obj)
+  setVal('objX',x);setVal('objY',y);setVal('objZ',z)
+  refresh()
+}
+
+function rayFromPos(g,d,s){
+  if(!pos)throw new Error('Position non définie.')
+  const a=g*Math.PI/3200,b=s*Math.PI/3200
+  return {
+    x:Math.round(wrap(pos.x+d*Math.sin(a))),
+    y:Math.round(wrap(pos.y+d*Math.cos(a))),
+    z:Math.round(pos.z+d*Math.tan(b))
+  }
+}
+
+function gdsToObj(o){
+  if(!pos)throw new Error('Position non définie.')
+  const dx=ld(pos.x,o.x),dy=ld(pos.y,o.y),dz=o.z-pos.z
+  const dh=Math.hypot(dx,dy)
+  let g=Math.atan2(dx,dy)*3200/Math.PI
+  if(g<0)g+=6400
+  return {g,dh,dz}
+}
+
+function gdiff(a,b){let d=b-a;if(d>3200)d-=6400;else if(d<-3200)d+=6400;return d}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name))
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'))
+  $('panel-'+name).classList.add('active')
+}
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab))
+
+$('savePos').onclick=()=>{try{savePosFromFields()}catch(e){alert(e.message)}}
+$('saveObj').onclick=()=>{try{saveObjFromFields()}catch(e){alert(e.message)}}
+$('clearPos').onclick=()=>{pos=null;localStorage.removeItem(LS_POS);setVal('posX','');setVal('posY','');setVal('posZ','0');refresh()}
+$('clearObj').onclick=()=>{obj=null;localStorage.removeItem(LS_OBJ);setVal('objX','');setVal('objY','');setVal('objZ','0');refresh()}
+$('loadSaved').onclick=()=>{init();refresh()}
+$('clearAll').onclick=()=>{localStorage.removeItem(LS_POS);localStorage.removeItem(LS_OBJ);pos=null;obj=null;refresh()}
+
+$('calcObj').onclick=()=>{
+  $('objErr').textContent='';$('objRes').style.display='none'
+  try{
+    const g=need(val('rayG'),'GIS'),d=need(val('rayD'),'DH'),s=need(val('rayS'),'SITE')
+    obj=rayFromPos(g,d,s)
+    save(LS_OBJ,obj)
+    setVal('objX',obj.x);setVal('objY',obj.y);setVal('objZ',obj.z)
+    $('rObjX').textContent=fmt5(obj.x)
+    $('rObjY').textContent=fmt5(obj.y)
+    $('rObjZ').textContent=obj.z
+    $('objRes').style.display='grid'
+    refresh()
+  }catch(e){$('objErr').textContent=e.message}
+}
+
+$('calcCorr').onclick=()=>{
+  $('corrErr').textContent='';$('corrRes').style.display='none'
+  try{
+    if(!obj)throw new Error('Objectif non défini.')
+    const g=need(val('pmG'),'GIS point moyen'),d=need(val('pmD'),'DH point moyen'),s=need(val('pmS'),'SITE point moyen')
+    const target=gdsToObj(obj)
+    const dg=gdiff(target.g,g)
+    const lat=d*dg*Math.PI/3200
+    const port=d-target.dh
+    $('rDir').textContent=lat>0?'PLUS A DROITE '+Math.round(Math.abs(lat)):lat<0?'PLUS A GAUCHE '+Math.round(Math.abs(lat)):'DIRECTION 0'
+    $('rPort').textContent=port>0?'PLUS PRES '+Math.round(Math.abs(port)):port<0?'PLUS LOIN '+Math.round(Math.abs(port)):'PORTEE 0'
+    $('corrRes').style.display='grid'
+  }catch(e){$('corrErr').textContent=e.message}
+}
+
+$('clearRay').onclick=()=>{['rayG','rayD','rayS'].forEach(id=>setVal(id,id==='rayS'?'0':''));$('objRes').style.display='none';$('objErr').textContent=''}
+$('clearPm').onclick=()=>{['pmG','pmD','pmS'].forEach(id=>setVal(id,id==='pmS'?'0':''));$('corrRes').style.display='none';$('corrErr').textContent=''}
+$('startCycle').onclick=()=>{$('cycleMsg').textContent='1) Vérifie/garde ta position. 2) Va dans Tir > Rayonnement objectif. 3) Calcule la correction avec POINT MOYEN.';switchTab('tir')}
+$('nextCycleObj').onclick=()=>{switchTab('tir');$('rayG').focus()}
+$('nextCycleCorr').onclick=()=>{switchTab('tir');$('pmG').focus()}
+
+function init(){
+  pos=load(LS_POS);obj=load(LS_OBJ)
+  if(pos){
+    pos={x:Math.round(pos.x),y:Math.round(pos.y),z:Math.round(pos.z)}
+    setVal('posX',pos.x);setVal('posY',pos.y);setVal('posZ',pos.z)
+  }
+  if(obj){
+    obj={x:Math.round(obj.x),y:Math.round(obj.y),z:Math.round(obj.z)}
+    setVal('objX',obj.x);setVal('objY',obj.y);setVal('objZ',obj.z)
+  }
+  refresh()
+}
+init()
+</script>
+</body>
+</html>
